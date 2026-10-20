@@ -78,7 +78,7 @@ Choose **Theme** from the header settings menu. The choice takes effect immediat
 - Solarized Light
 - Flexoki Light
 
-The six JSON theme files come from the official [GPUI Kit v0.7.3 catalog](https://github.com/longbridge/gpui-kit/tree/v0.7.3/themes). Retained definitions and colors are unchanged. See the [theme notices](../assets/themes/NOTICE.md), [Apache-2.0 license](../assets/themes/LICENSE-APACHE), and [third-party notices](../THIRDPARTY_LICENSES.md).
+The six JSON theme files come from the official [GPUI Kit v0.7.3 catalog](https://github.com/longbridge/gpui-kit/tree/v0.7.3/themes). Retained definitions and colors are unchanged. See the [third-party notices](../THIRDPARTY_LICENSES.md) for the license and attribution.
 
 ## Keyboard Shortcuts
 

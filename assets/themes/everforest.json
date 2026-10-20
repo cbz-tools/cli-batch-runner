@@ -1,5 +1,5 @@
 {
-  "$comment": "CLI Batch Runner modification: filtered the upstream GPUI Kit v0.7.3 theme set to retain only Everforest Dark. Retained theme definitions, color tokens, author, and project URL are unchanged. GPUI Kit copyright 2024 - 2026 Longbridge; Apache-2.0, see LICENSE-APACHE and NOTICE.md.",
+  "$comment": "CLI Batch Runner modification: filtered the upstream GPUI Kit v0.7.3 theme set to retain only Everforest Dark. Retained theme definitions, color tokens, author, and project URL are unchanged. GPUI Kit copyright 2024 - 2026 Longbridge; Apache-2.0, see ../../THIRDPARTY_LICENSES.md.",
   "$schema": "https://github.com/longbridge/gpui-kit/raw/refs/heads/main/.theme-schema.json",
   "name": "Everforest",
   "author": "sainnhe",

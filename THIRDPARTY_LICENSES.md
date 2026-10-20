@@ -2,7 +2,32 @@
 
 This document records third-party license notices for CLI Batch Runner. Components are grouped by license-family classification for navigation; the classification is informational and does not supersede the original notices. All notice-specific copyright and attribution text is retained. Identical standard legal text is reproduced once under **Shared License Texts** and referenced by notice ID.
 
-The license for CLI Batch Runner itself is in [LICENSE](LICENSE). GPUI Kit themes retain their separate [Apache-2.0 text](assets/themes/LICENSE-APACHE) and [theme notices](assets/themes/NOTICE.md).
+The license for CLI Batch Runner itself is in [LICENSE](LICENSE). GPUI Kit theme licensing and notices are reproduced in the [GPUI Kit Themes](#gpui-kit-themes) section below.
+
+## GPUI Kit Themes
+
+````text
+Copyright 2024 - 2026 Longbridge <https://longbridge.com>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+````
+
+Source: [GPUI Kit v0.7.3 themes](https://github.com/longbridge/gpui-kit/tree/v0.7.3/themes).
+The full Apache-2.0 license body is included under [Shared License Texts, L002](#l002).
+
+CLI Batch Runner modified the upstream theme-set files by retaining only Catppuccin Mocha, Everforest Dark, Flexoki Light, Gruvbox Dark, Solarized Light, and Tokyo Night, removing the other variants. The retained entries, including their color tokens, authors, and project URLs, are unchanged. Default Light and Default Dark are supplied by GPUI Kit itself.
+
+Each JSON file preserves its upstream author and project URL and carries a `$comment` modification notice for the filtering. This application notice records the filtering performed by CLI Batch Runner; it is not an upstream NOTICE file.
 
 ## License Groups
 
@@ -7318,8 +7343,8 @@ License alternative: Apache-2.0
 
 #### Notice 99
 
-- [gpui-kit 0.7.3](https://crates.io/crates/gpui-kit/0.7.3) — `assets/icons/copyright.svg`
-- [gpui-kit-assets 0.7.3](https://crates.io/crates/gpui-kit-assets/0.7.3) — `assets/icons/copyright.svg`
+- [gpui-kit 0.7.3](https://crates.io/crates/gpui-kit/0.7.3) — [assets/icons/copyright.svg](https://github.com/cbz-tools/cli-batch-runner/blob/main/assets/icons/copyright.svg)
+- [gpui-kit-assets 0.7.3](https://crates.io/crates/gpui-kit-assets/0.7.3) — [assets/icons/copyright.svg](https://github.com/cbz-tools/cli-batch-runner/blob/main/assets/icons/copyright.svg)
 
 ````text
 <svg

@@ -67,6 +67,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
           files: target/package/cli-batch-runner-${{ github.ref_name }}-windows-x64.zip
+          overwrite_files: true
           fail_on_unmatched_files: true
           draft: false
           prerelease: false

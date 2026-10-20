@@ -24,8 +24,8 @@ Extract the ZIP and launch `cli-batch-runner.exe`.
 <table>
   <tr><th>Ready to Run</th><th>Completed</th></tr>
   <tr>
-    <td><a href="docs/screenshots/ready-to-run.png"><img src="docs/screenshots/ready-to-run.png" alt="Configured profile and queued files" width="220"></a></td>
-    <td><a href="docs/screenshots/completed.png"><img src="docs/screenshots/completed.png" alt="Completed batch with exit code results" width="220"></a></td>
+    <td><a href="https://github.com/cbz-tools/cli-batch-runner/blob/main/docs/screenshots/ready-to-run.png"><img src="https://raw.githubusercontent.com/cbz-tools/cli-batch-runner/main/docs/screenshots/ready-to-run.png" alt="Configured profile and queued files" width="220"></a></td>
+    <td><a href="https://github.com/cbz-tools/cli-batch-runner/blob/main/docs/screenshots/completed.png"><img src="https://raw.githubusercontent.com/cbz-tools/cli-batch-runner/main/docs/screenshots/completed.png" alt="Completed batch with exit code results" width="220"></a></td>
   </tr>
 </table>
 
@@ -35,7 +35,7 @@ Extract the ZIP and launch `cli-batch-runner.exe`.
 2. **Add Files** — Use **Add Files**, **Add Folder**, or drag and drop to add files to the queue.
 3. **Run** — Click the **Start** button to run the queued files.
 
-For detailed instructions, see the [User Guide](docs/USER_GUIDE.md).
+For detailed instructions, see the [User Guide](https://github.com/cbz-tools/cli-batch-runner/blob/main/docs/USER_GUIDE.md).
 
 ## Usage / Examples
 
@@ -118,7 +118,7 @@ Build and verify:
 
 ## Documentation
 
-- [User Guide](docs/USER_GUIDE.md)
+- [User Guide](https://github.com/cbz-tools/cli-batch-runner/blob/main/docs/USER_GUIDE.md)
 - [Third-party License Notices](THIRDPARTY_LICENSES.md)
 
 ## Changelog

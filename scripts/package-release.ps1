@@ -37,12 +37,7 @@ try {
         'README.md',
         'CHANGELOG.md',
         'LICENSE',
-        'THIRDPARTY_LICENSES.md',
-        'assets/themes/LICENSE-APACHE',
-        'assets/themes/NOTICE.md',
-        'docs/USER_GUIDE.md',
-        'docs/screenshots/ready-to-run.png',
-        'docs/screenshots/completed.png'
+        'THIRDPARTY_LICENSES.md'
     )
     $packageName = "cli-batch-runner-$Version-windows-x64"
     $outputDirectory = Join-Path $ProjectRoot 'target\package'
