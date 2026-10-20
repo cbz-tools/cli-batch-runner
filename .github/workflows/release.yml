@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows x64 release
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v7
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+          components: rustfmt, clippy
+
+      - name: Cache Cargo artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Verify tag version and binary name
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: .\scripts\package-release.ps1 -Version $env:RELEASE_TAG -ValidateVersionOnly
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Check compilation
+        run: cargo check --locked
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+      - name: Build and verify Release executable
+        run: .\scripts\build-release.ps1
+
+      - name: Package and verify public ZIP allowlist
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: .\scripts\package-release.ps1 -Version $env:RELEASE_TAG
+
+      - name: Upload Windows release package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-batch-runner-${{ github.ref_name }}-windows-x64
+          path: target/package/cli-batch-runner-${{ github.ref_name }}-windows-x64.zip
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/package/cli-batch-runner-${{ github.ref_name }}-windows-x64.zip
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
+          body: '[**Changelog**](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/CHANGELOG.md)'

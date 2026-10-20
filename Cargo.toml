@@ -1,0 +1,30 @@
+[package]
+name = "cli-batch-runner"
+version = "0.1.0"
+edition = "2024"
+description = "A tabbed GUI for batch-running CLI tools on files."
+license = "MIT"
+
+[[bin]]
+name = "cli-batch-runner"
+path = "src/main.rs"
+
+[dependencies]
+chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
+gpui-kit = { version = "=0.7.3", features = ["gpui-fast"] }
+rfd = { version = "0.17.2", default-features = false }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+toml = "1.1.8"
+uuid = { version = "1.28.0", features = ["v4", "serde"] }
+
+[target.'cfg(windows)'.dependencies]
+clipboard-win = "5"
+
+[build-dependencies]
+winres = "0.1"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
