@@ -7,7 +7,7 @@ mod settings;
 
 use std::{
     cell::Cell,
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     fs,
     path::{Path, PathBuf},
     rc::Rc,
@@ -23,7 +23,8 @@ use std::{
 use gpui_kit::assets::IconName as LucideIcon;
 use gpui_kit::{
     Context, Entity, FocusHandle, Focusable, IntoElement, KeyDownEvent, MouseButton,
-    MouseDownEvent, PathPromptOptions, Render, ScrollHandle, StatefulInteractiveElement, Window,
+    MouseDownEvent, PathPromptOptions, Pixels, Render, ScrollHandle, StatefulInteractiveElement,
+    Window,
     base::{
         Disableable, Scrollbar, ScrollbarMode, SelectableText, TextSelection, TextSelectionHandle,
         TextSelectionLayer, VirtualListScrollHandle, v_virtual_list,
@@ -466,6 +467,30 @@ struct FileRow {
     status_type: FileStatus,
     selected: bool,
     log_enabled: bool,
+    height: Pixels,
+}
+
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+struct RowMeasurementKey {
+    text_width_bits: u32,
+    font_size_bits: u32,
+    line_height_bits: u32,
+    scale_factor_bits: u32,
+    rem_size_bits: u32,
+    font_style: String,
+    line_clamp: Option<usize>,
+}
+
+struct RowHeightCache {
+    key: RowMeasurementKey,
+    heights: HashMap<Uuid, (String, Pixels)>,
+}
+
+struct LastRowLayout {
+    tab_id: Uuid,
+    key: RowMeasurementKey,
+    file_ids: Vec<Uuid>,
+    heights: Vec<Pixels>,
 }
 
 pub struct BatchRunner {
@@ -476,6 +501,8 @@ pub struct BatchRunner {
     app_focus: FocusHandle,
     queue_focus: FocusHandle,
     queue_scroll: VirtualListScrollHandle,
+    row_height_caches: VecDeque<RowHeightCache>,
+    last_row_layout: Option<LastRowLayout>,
     tab_scroll: ScrollHandle,
     tab_context_target: Rc<Cell<Option<Uuid>>>,
     status_filter_select: Entity<SelectState<SearchableVec<String>>>,
@@ -617,6 +644,8 @@ impl BatchRunner {
             app_focus: cx.focus_handle(),
             queue_focus: cx.focus_handle(),
             queue_scroll: VirtualListScrollHandle::new(),
+            row_height_caches: VecDeque::new(),
+            last_row_layout: None,
             tab_scroll,
             tab_context_target: Rc::new(Cell::new(None)),
             status_filter_select,
@@ -860,6 +889,8 @@ impl BatchRunner {
             self.banner = Some(error);
         }
         self.tabs.remove(index);
+        self.row_height_caches.clear();
+        self.last_row_layout = None;
         self.logs.remove(&id);
         self.histories.remove(&id);
         self.file_logs.retain(|(tab, _), _| *tab != id);
@@ -1055,6 +1086,8 @@ impl BatchRunner {
         }
         if let Some(tab) = self.tabs.iter_mut().find(|tab| tab.profile.id == tab_id) {
             tab.remove_selected();
+            self.row_height_caches.clear();
+            self.last_row_layout = None;
         }
     }
 
@@ -1064,6 +1097,8 @@ impl BatchRunner {
         }
         if let Some(tab) = self.tabs.iter_mut().find(|tab| tab.profile.id == tab_id) {
             tab.clear();
+            self.row_height_caches.clear();
+            self.last_row_layout = None;
         }
     }
 

@@ -15,10 +15,14 @@ impl BatchRunner {
         let status_filter_field =
             self.render_status_filter(selected_index, selected_id, window, cx);
         let file_filter_field = self.render_file_filter(selected_index, cx);
+        let list_width = queue_list_width(window);
+        let text_width = file_name_column_width(list_width, window);
         let rows = self.build_visible_rows(selected_index);
+        let rows =
+            self.measure_visible_rows(rows, selected_id.unwrap_or_default(), text_width, window);
         let shown = rows.len();
         let list_tab_id = selected_id.unwrap_or_default();
-        let list = self.render_file_list(rows, list_tab_id, window, cx);
+        let list = self.render_file_list(rows, list_tab_id, list_width, cx);
 
         let mut queue = div()
             .id("queue")
@@ -161,21 +165,133 @@ impl BatchRunner {
                     status_type: file.status,
                     selected: tab.selection.selected.contains(&file.id),
                     log_enabled: self.has_file_log(tab_id, file.id),
+                    height: px(36.),
                 }
             })
             .collect()
+    }
+
+    fn measure_visible_rows(
+        &mut self,
+        mut rows: Vec<FileRow>,
+        tab_id: Uuid,
+        text_width: Pixels,
+        window: &Window,
+    ) -> Vec<FileRow> {
+        let text_style = window.text_style();
+        let font_size = text_style.font_size.to_pixels(window.rem_size());
+        let line_height = window.line_height();
+        let key = RowMeasurementKey {
+            text_width_bits: text_width.as_f32().to_bits(),
+            font_size_bits: font_size.as_f32().to_bits(),
+            line_height_bits: line_height.as_f32().to_bits(),
+            scale_factor_bits: window.scale_factor().to_bits(),
+            rem_size_bits: window.rem_size().as_f32().to_bits(),
+            font_style: format!("{:?};{:?}", text_style.font(), text_style.white_space),
+            line_clamp: text_style.line_clamp,
+        };
+        let file_ids = rows.iter().map(|row| row.file_id).collect::<Vec<_>>();
+        let restore_anchor = self.last_row_layout.as_ref().and_then(|layout| {
+            if layout.tab_id != tab_id || layout.file_ids != file_ids || layout.key == key {
+                return None;
+            }
+            let content_position = (-self.queue_scroll.offset().y).max(px(0.));
+            let mut row_top = px(0.);
+            layout
+                .heights
+                .iter()
+                .enumerate()
+                .find_map(|(index, height)| {
+                    let row_bottom = row_top + *height;
+                    let anchor = (content_position < row_bottom
+                        || index + 1 == layout.heights.len())
+                    .then_some((index, (content_position - row_top).max(px(0.))));
+                    row_top = row_bottom;
+                    anchor
+                })
+        });
+
+        if let Some(index) = self
+            .row_height_caches
+            .iter()
+            .position(|cache| cache.key == key)
+            && let Some(cache) = self.row_height_caches.remove(index)
+        {
+            self.row_height_caches.push_front(cache);
+        } else {
+            self.row_height_caches.push_front(RowHeightCache {
+                key: key.clone(),
+                heights: HashMap::new(),
+            });
+            self.row_height_caches.truncate(4);
+        }
+
+        let cache = self
+            .row_height_caches
+            .front_mut()
+            .expect("row height cache was just inserted");
+        for row in &mut rows {
+            let measured = cache.heights.entry(row.file_id).or_insert_with(|| {
+                (
+                    row.path.clone(),
+                    measure_file_name_height(
+                        &row.path,
+                        text_width,
+                        font_size,
+                        line_height,
+                        &text_style,
+                        window,
+                    ),
+                )
+            });
+            if measured.0 != row.path {
+                *measured = (
+                    row.path.clone(),
+                    measure_file_name_height(
+                        &row.path,
+                        text_width,
+                        font_size,
+                        line_height,
+                        &text_style,
+                        window,
+                    ),
+                );
+            }
+            row.height = measured.1;
+        }
+        let heights = rows.iter().map(|row| row.height).collect::<Vec<_>>();
+        if let Some((anchor_index, offset_in_row)) = restore_anchor
+            && let Some(anchor_height) = heights.get(anchor_index)
+        {
+            let prefix = heights[..anchor_index]
+                .iter()
+                .copied()
+                .fold(px(0.), |total, height| total + height);
+            let offset_in_row = offset_in_row.min((*anchor_height - px(1.)).max(px(0.)));
+            self.queue_scroll
+                .set_offset(gpui_kit::point(px(0.), -(prefix + offset_in_row)));
+        }
+        self.last_row_layout = Some(LastRowLayout {
+            tab_id,
+            key,
+            file_ids,
+            heights,
+        });
+        rows
     }
 
     fn render_file_list(
         &self,
         rows: Vec<FileRow>,
         list_tab_id: Uuid,
-        window: &Window,
+        list_width: Pixels,
         cx: &mut Context<Self>,
     ) -> AnyElement {
-        let shown = rows.len();
-        let row_width = (window.bounds().size.width - px(48.)).max(px(360.));
-        let row_sizes = Rc::new(vec![size(row_width, px(36.)); shown]);
+        let row_sizes = Rc::new(
+            rows.iter()
+                .map(|row| size(list_width, row.height))
+                .collect::<Vec<_>>(),
+        );
         let row_models = Rc::new(rows);
         v_virtual_list(
             cx.entity(),
@@ -371,7 +487,7 @@ fn render_file_row(row: &FileRow, list_tab_id: Uuid, cx: &mut Context<BatchRunne
     div()
         .id(format!("file-row-{file_id}"))
         .w_full()
-        .h(px(36.))
+        .h(row.height)
         .flex()
         .items_center()
         .gap_3()
@@ -408,7 +524,9 @@ fn render_file_row(row: &FileRow, list_tab_id: Uuid, cx: &mut Context<BatchRunne
             div()
                 .id(format!("file-name-{file_id}"))
                 .flex_1()
-                .overflow_hidden()
+                .min_w(px(0.))
+                .py_1()
+                .whitespace_normal()
                 .child(path)
                 .tooltip(move |window, cx| Tooltip::new(tooltip_path.clone()).build(window, cx)),
         )
@@ -442,4 +560,43 @@ fn render_file_row(row: &FileRow, list_tab_id: Uuid, cx: &mut Context<BatchRunne
                 ),
         )
         .into_any_element()
+}
+
+fn queue_list_width(window: &Window) -> Pixels {
+    let root_padding = rems(0.75).to_pixels(window.rem_size()) * 2.0;
+    (window.bounds().size.width - root_padding - px(2.) - px(QUEUE_SCROLLBAR_GUTTER_WIDTH))
+        .max(px(1.))
+}
+
+fn file_name_column_width(list_width: Pixels, window: &Window) -> Pixels {
+    let row_padding = rems(0.5).to_pixels(window.rem_size()) * 2.0;
+    let inter_column_gaps = rems(0.75).to_pixels(window.rem_size()) * 2.0;
+    let fixed_columns = px(FILE_STATUS_COLUMN_WIDTH) + px(FILE_LOG_COLUMN_WIDTH);
+    (list_width - row_padding - inter_column_gaps - fixed_columns).max(px(1.))
+}
+
+fn measure_file_name_height(
+    text: &str,
+    width: Pixels,
+    font_size: Pixels,
+    line_height: Pixels,
+    text_style: &gpui_kit::TextStyle,
+    window: &Window,
+) -> Pixels {
+    let run = text_style.to_run(text.len());
+    let wrapped_lines = window
+        .text_system()
+        .shape_text(
+            text.to_owned().into(),
+            font_size,
+            &[run],
+            Some(width),
+            text_style.line_clamp,
+        )
+        .unwrap_or_default();
+    let content_height = wrapped_lines
+        .iter()
+        .map(|line| line.size(line_height).height)
+        .fold(px(0.), |total, height| total + height);
+    (content_height + rems(0.5).to_pixels(window.rem_size())).max(px(36.))
 }
